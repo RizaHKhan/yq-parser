@@ -25,7 +25,7 @@ function M.init(opts)
 	local format = (source_filetype == "json" or (source_filetype ~= "yaml" and is_json)) and "json" or "yaml"
 	local function evaluate(filter)
 		return vim.fn.system({
-			"yq", "eval", "-p", format, "-o", format, "-I", "2", "--expression", filter, "-",
+			"yq", "eval", "-p", format, "-o", format, "--prettyPrint", "-I", "2", "--expression", filter, "-",
 		}, input)
 	end
 
