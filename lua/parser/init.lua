@@ -10,12 +10,12 @@ function M.init(opts)
 	end
 
 	if vim.fn.executable("yq") ~= 1 then
-		vim.notify("JsonParser: yq (Mike Farah v4) is not installed or not on PATH", vim.log.levels.ERROR)
+		vim.notify("YqParser: yq (Mike Farah v4) is not installed or not on PATH", vim.log.levels.ERROR)
 		return
 	end
 
 	if input:match("^%s*$") then
-		vim.notify("JsonParser: input is empty", vim.log.levels.ERROR)
+		vim.notify("YqParser: input is empty", vim.log.levels.ERROR)
 		return
 	end
 
@@ -26,7 +26,7 @@ function M.init(opts)
 
 	local output = evaluate(".")
 	if vim.v.shell_error ~= 0 then
-		vim.notify("JsonParser: yq could not parse input:\n" .. output, vim.log.levels.ERROR)
+		vim.notify("YqParser: yq could not parse input:\n" .. output, vim.log.levels.ERROR)
 		return
 	end
 
@@ -54,7 +54,7 @@ function M.init(opts)
 		-- Each filter runs against the original input, not the previous result.
 		local filtered = evaluate(filter)
 		if vim.v.shell_error ~= 0 then
-			vim.notify("JsonParser: yq filter failed:\n" .. filtered, vim.log.levels.ERROR)
+			vim.notify("YqParser: yq filter failed:\n" .. filtered, vim.log.levels.ERROR)
 			return
 		end
 		last_filter = filter
