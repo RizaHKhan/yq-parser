@@ -35,6 +35,10 @@ function M.init(opts)
 		return
 	end
 
+	-- Remember the working directory at creation, even if it changes later.
+	local creation_cwd = vim.fn.getcwd()
+	local source_extension = vim.fn.expand("%:e"):lower()
+	local save_extension = (format == "yaml" and source_extension == "yml") and "yml" or format
 	local result_buf = vim.api.nvim_create_buf(false, true)
 	vim.bo[result_buf].bufhidden = "wipe"
 	vim.bo[result_buf].swapfile = false
@@ -88,6 +92,48 @@ function M.init(opts)
 			vim.ui.input(input_opts, on_confirm)
 		end
 	end, { buffer = result_buf, desc = "Enter a yq filter" })
+
+	vim.keymap.set("n", "s", function()
+		local function on_confirm(path)
+			if not path or not path:match("%S") or not vim.api.nvim_buf_is_valid(result_buf) then
+				return
+			end
+			path = vim.fn.expand(path)
+			if path:sub(1, 1) ~= "/" then
+				path = vim.fs.joinpath(creation_cwd, path)
+			end
+			if vim.fn.fnamemodify(path, ":e") == "" then
+				path = path .. "." .. save_extension
+			end
+
+			-- Exclusive creation prevents accidentally overwriting an existing file.
+			local fd, open_error = vim.uv.fs_open(path, "wx", 420)
+			if not fd then
+				vim.notify("YqParser: could not save: " .. tostring(open_error), vim.log.levels.ERROR)
+				return
+			end
+			local lines = vim.api.nvim_buf_get_lines(result_buf, 0, -1, false)
+			local content = table.concat(lines, "\n") .. "\n"
+			local written, write_error = vim.uv.fs_write(fd, content, 0)
+			local closed, close_error = vim.uv.fs_close(fd)
+			if written ~= #content or not closed then
+				vim.notify("YqParser: save failed: " .. tostring(write_error or close_error or "incomplete write"), vim.log.levels.ERROR)
+				return
+			end
+			vim.notify("YqParser: saved " .. path, vim.log.levels.INFO)
+		end
+		local input_opts = {
+			prompt = "save to:",
+			default = vim.fs.joinpath(creation_cwd, "result." .. save_extension),
+			completion = "file",
+		}
+		local ok, snacks = pcall(require, "snacks")
+		if ok and snacks.input then
+			snacks.input(input_opts, on_confirm)
+		else
+			vim.ui.input(input_opts, on_confirm)
+		end
+	end, { buffer = result_buf, desc = "Save to path" })
 
 	vim.cmd("botright vsplit")
 	vim.api.nvim_win_set_buf(0, result_buf)
