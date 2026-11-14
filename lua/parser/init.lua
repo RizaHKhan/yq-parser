@@ -33,7 +33,7 @@ function M.init(opts)
 	local result_buf = vim.api.nvim_create_buf(false, true)
 	vim.bo[result_buf].bufhidden = "wipe"
 	vim.bo[result_buf].swapfile = false
-	vim.bo[result_buf].filetype = "yaml"
+	vim.bo[result_buf].filetype = "json"
 
 	local function show_result(result)
 		local lines = vim.split(result, "\n", { plain = true })
