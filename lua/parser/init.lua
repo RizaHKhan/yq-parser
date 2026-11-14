@@ -19,9 +19,14 @@ function M.init(opts)
 		return
 	end
 
-	-- YAML parsing also accepts JSON. Always emit YAML for consistent highlighting.
+	-- Preserve the source format; detect JSON even in buffers without a filetype.
+	local is_json = pcall(vim.json.decode, input)
+	local source_filetype = vim.bo.filetype
+	local format = (source_filetype == "json" or (source_filetype ~= "yaml" and is_json)) and "json" or "yaml"
 	local function evaluate(filter)
-		return vim.fn.system({ "yq", "eval", "-p", "yaml", "-o", "yaml", "--expression", filter, "-" }, input)
+		return vim.fn.system({
+			"yq", "eval", "-p", format, "-o", format, "-I", "2", "--expression", filter, "-",
+		}, input)
 	end
 
 	local output = evaluate(".")
@@ -33,7 +38,7 @@ function M.init(opts)
 	local result_buf = vim.api.nvim_create_buf(false, true)
 	vim.bo[result_buf].bufhidden = "wipe"
 	vim.bo[result_buf].swapfile = false
-	vim.bo[result_buf].filetype = "json"
+	vim.bo[result_buf].filetype = format
 
 	local function show_result(result)
 		local lines = vim.split(result, "\n", { plain = true })
