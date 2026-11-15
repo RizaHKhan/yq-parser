@@ -13,4 +13,14 @@ If in visual mode, it will only use the selected lines, otherwise it will use th
 ## Requirements
 
 - `yq`
-- `snacks` 
+- `snacks`
+
+## Installation
+
+Lazy:
+
+```
+{
+  "RizaHKhan/jq-parser"
+}
+```
